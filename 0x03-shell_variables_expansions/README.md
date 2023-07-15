@@ -1,1 +1,1 @@
-shell_variables_expansions
+This directory contains all my shell scripts on shell variables and expansion

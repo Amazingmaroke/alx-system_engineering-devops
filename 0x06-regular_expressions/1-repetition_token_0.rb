@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
-# A regular expression that is matches a given pattern
-puts ARGV[0].scan(/hbt{2,5}n/).join
+
+# Match htbn with t ranging from 2 t0 5 string in a text
+
+puts ARGV[0].scan(/hbt{2,5}n/)

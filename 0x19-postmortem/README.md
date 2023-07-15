@@ -1,65 +1,38 @@
-# Postmortem
+**Postmortem:** Apache returning error 500
 
-Upon the release of Holberton School's System Engineering & DevOps project 0x19,
-approximately 00:07 Pacific Standard Time (PST), an outage occurred on an isolated
-Ubuntu 14.04 container running an Apache web server. GET requests on the server led to
-`500 Internal Server Error`'s, when the expected response was an HTML file defining a
-simple Holberton WordPress site.
+**Date:** June 6, 2023
 
-## Debugging Process
+**Summary:** The purpose of the incident analysis is to analyze and learn from the incident of Apache2 500 error which resulted in service outage and impacted our user experience.
+Incident Description: June 6, at exactly 12:00 pm, users started reporting inability to access our website due to internal server error 500, the incident lasted for about 4 hours before service was fully restored.
 
-Bug debugger Brennan (BDB... as in my actual initials... made that up on the spot, pretty
-good, huh?) encountered the issue upon opening the project and being, well, instructed to
-address it, roughly 19:20 PST. He promptly proceeded to undergo solving the problem.
+**Root Cause Analysis:**
 
-1. Checked running processes using `ps aux`. Two `apache2` processes - `root` and `www-data` -
-were properly running.
+- Why did this happen?: The web server couldn’t access the file needed to render the web page
+- Why couldn’t the server access the file?: The file to be rendered was not available
+- Why was the file not available?: The filename was incorrect
+- Why was the filename incorrect?: There wasn’t a proper testing measure in place
+- Why wasn’t there a proper testing inplace?: Staffs has little or no knowledge of functional and unit testing
+- Why do staffs have little or no knowledge of functional and unit testing?: There is no proper training on testing
 
-2. Looked in the `sites-available` folder of the `/etc/apache2/` directory. Determined that
-the web server was serving content located in `/var/www/html/`.
+**Impact Assessment:** The outage lasted for about 4 hours, resulting in loss of finances and users frustration. Approximately 10,000 users were affected by the incident, resulting in users negative feedbacks
 
-3. In one terminal, ran `strace` on the PID of the `root` Apache process. In another, curled
-the server. Expected great things... only to be disappointed. `strace` gave no useful
-information.
+**Response and Resolution:** The incident was immediately forwarded to the operations and development teams on call which I was part, we started investigating the issue using strace to diagnose the running process of web server while trying to access the server. Finally we were able to identify the file not found error which is due to wrong filename, we then implemented the fix by renaming the file to get the server back online and active.
 
-4. Repeated step 3, except on the PID of the `www-data` process. Kept expectations lower this
-time... but was rewarded! `strace` revelead an `-1 ENOENT (No such file or directory)` error
-occurring upon an attempt to access the file `/var/www/html/wp-includes/class-wp-locale.phpp`.
+**Lesson learned:**
 
-5. Looked through files in the `/var/www/html/` directory one-by-one, using Vim pattern
-matching to try and locate the erroneous `.phpp` file extension. Located it in the
-`wp-settings.php` file. (Line 137, `require_once( ABSPATH . WPINC . '/class-wp-locale.php' );`).
+- Ensuring proper team training
+- The team should prioritize robust testing before production
+- Proactive monitoring of the web servers
 
-6. Removed the trailing `p` from the line.
+**Preventive Measures:**
 
-7. Tested another `curl` on the server. 200 A-ok!
+- Implement automated monitoring and alerting system
+- Implement robust testing
 
-8. Wrote a Puppet manifest to automate fixing of the error.
+**Recommendation:**
 
-## Summation
+- Regular team training on testing
+- Implement automated monitoring system
 
-In short, a typo. Gotta love'em. In full, the WordPress app was encountering a critical
-error in `wp-settings.php` when tyring to load the file `class-wp-locale.phpp`. The correct
-file name, located in the `wp-content` directory of the application folder, was
-`class-wp-locale.php`.
-
-Patch involved a simple fix on the typo, removing the trailing `p`.
-
-## Prevention
-
-This outage was not a web server error, but an application error. To prevent such outages
-moving forward, please keep the following in mind.
-
-* Test! Test test test. Test the application before deploying. This error would have arisen
-and could have been addressed earlier had the app been tested.
-
-* Status monitoring. Enable some uptime-monitoring service such as
-[UptimeRobot](./https://uptimerobot.com/) to alert instantly upon outage of the website.
-
-Note that in response to this error, I wrote a Puppet manifest
-[0-strace_is_your_friend.pp](https://github.com/bdbaraban/holberton-system_engineering-devops/blob/master/0x17-web_stack_debugging_3/0-strace_is_your_friend.pp)
-to automate fixing of any such identitical errors should they occur in the future. The manifest
-replaces any `phpp` extensions in the file `/var/www/html/wp-settings.php` with `php`.
-
-But of course, it will never occur again, because we're programmers, and we never make
-errors! :wink:
+**Conclusion:**
+The incident analysis highlighted the need for improved knowledge sharing, testing and proactive monitoring.
